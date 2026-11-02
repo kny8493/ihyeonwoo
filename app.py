@@ -183,8 +183,9 @@ elif st.session_state.mode == "university":
         if waiting_for_vis:
             vis_response_lower = user_input.lower().strip()
             
-            # 긍정 응답 처리
-            if any(word in vis_response_lower for word in ['네', '예', 'yes', '보여', '보여주', '좋아', 'ok', 'okay', '좋아요', '보고싶', '보고싶어', '보고 싶']):
+            declined = any(word in vis_response_lower for word in ['아니', 'no', '괜찮', '안 ', '안보', '필요없', '싫', '말아', '말고'])
+            # 거절 표현을 긍정 표현보다 우선한다.
+            if not declined and any(word in vis_response_lower for word in ['네', '예', 'yes', '보여', '보여주', '좋아', 'ok', 'okay', '좋아요', '보고싶', '보고싶어', '보고 싶']):
                 vis = create_visualization(
                     st.session_state.last_vis_type,
                     university_df, major_df, admission_df
@@ -204,7 +205,7 @@ elif st.session_state.mode == "university":
                 st.rerun()
             
             # 부정 응답 처리
-            elif any(word in vis_response_lower for word in ['아니', 'no', '괜찮', '안', '필요없', '아니요', '괜찮아', '괜찮습니다', '싫', '싫어', '안 보고', '안 보']):
+            elif declined:
                 st.session_state.chat_messages.append({
                     "role": "user",
                     "content": user_input
@@ -232,12 +233,6 @@ elif st.session_state.mode == "university":
         
         # 일반 질문 처리
         else:
-            # 모르는 질문 반복 방지: 같은 질문이 연속으로 들어온 경우 스킵
-            if (st.session_state.last_unknown_response is not None and 
-                st.session_state.last_unknown_response.lower().strip() == user_input.lower().strip()):
-                # 같은 질문이면 응답하지 않고 무시
-                st.rerun()
-            
             # 사용자 메시지 추가
             st.session_state.chat_messages.append({
                 "role": "user",
