@@ -22,20 +22,18 @@ def load_data():
     return university_df, major_df, admission_df
 
 def analyze_question(question):
-    """질문 분석 및 카테고리 분류"""
-    keywords = {
-        '내신': ['내신', '성적', '갈 수', '들어갈', '입학 가능', '입학', '가능한', '지원', '합격', '입시', '등급으로', '등급으로는', '내신으로', '성적으로'],
-        '대학': ['대학', '학교', '캠퍼스'],
-        '학과': ['학과', '전공', '과'],
-        '진학': ['진학', '입시', '합격'],
-        '취업': ['취업', '연봉', '취직', '직업'],
-        '추천': ['추천', '어디', '좋은']
-    }
-    
-    # 내신 관련 키워드가 우선순위가 높음
-    for category, words in keywords.items():
-        if any(word in question for word in words):
-            return category
+    """구체적인 질문 의도를 일반적인 대학 키워드보다 먼저 판단한다."""
+    question = question.lower().strip()
+    if extract_grade(question) is not None or any(word in question for word in ['내신', '성적', '등급', '입학', '갈 수', '들어갈', '지원', '합격', '입시']):
+        return '내신'
+    if any(word in question for word in ['진학률', '진학']):
+        return '진학'
+    if any(word in question for word in ['학과', '전공', '공학', '의예', '간호', '경영', '경제', '교육', '심리', '디자인', '계열']):
+        return '학과'
+    if any(word in question for word in ['취업', '연봉', '취직', '직업']):
+        return '취업'
+    if any(word in question for word in ['대학', '학교', '캠퍼스', '인서울']):
+        return '대학'
     return None
 
 def extract_grade(question):
@@ -96,7 +94,7 @@ def get_response(question, university_df, major_df, admission_df):
 
 다른 대학을 추천해드릴까요?
 """
-                return response, True, 'grade_analysis'
+                return response, False, None
         
         # 내신으로 갈 수 있는 대학 추천
         # 인서울 대학만 필터링
@@ -127,7 +125,7 @@ def get_response(question, university_df, major_df, admission_df):
             
             response += f"📊 총 **{len(available_universities)}개** 대학에 지원 가능합니다.\n\n"
             response += "💡 **안내**: 등급은 참고용이며, 실제 입시 결과는 변동될 수 있습니다."
-            return response, True, 'grade_recommendation'
+            return response, False, None
         else:
             response = f"내신 {user_grade}등급으로는 인서울 대학 입학이 어려울 수 있습니다. 다른 지역 대학이나 전문대를 고려해보시기 바랍니다."
             return response, False, None
@@ -160,7 +158,7 @@ def get_response(question, university_df, major_df, admission_df):
     elif category == '학과':
         # 특정 학과 검색
         for _, row in major_df.iterrows():
-            if row['학과명'] in question or row['분야'] in question:
+            if row['학과명'] in question or row['학과명'].removesuffix('과') in question or row['분야'] in question:
                 response = f"""
 **{row['학과명']}** 정보를 알려드리겠습니다.
 
