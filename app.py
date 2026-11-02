@@ -158,8 +158,10 @@ elif st.session_state.mode == "university":
                     vis = message["visualization"]
                     if isinstance(vis, pd.DataFrame):
                         st.dataframe(vis, use_container_width=True)
-                    else:
+                    elif vis is not None:
                         st.plotly_chart(vis, use_container_width=True)
+                    else:
+                        st.info("이 항목은 위 상담 내용으로 확인해주세요. 표시할 표나 그래프가 없습니다.")
     
     # 사용자 입력 처리
     # 시각화 대기 중인지 확인 (마지막 메시지가 시각화 제안인지 확인)
@@ -195,7 +197,7 @@ elif st.session_state.mode == "university":
                 
                 st.session_state.chat_messages.append({
                     "role": "assistant",
-                    "content": "여기 표/그래프입니다:",
+                    "content": "여기 표/그래프입니다:" if vis is not None else "이 항목은 위 상담 내용으로 확인해주세요.",
                     "visualization": vis
                 })
                 st.session_state.last_vis_type = None
